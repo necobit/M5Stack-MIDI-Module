@@ -1,3 +1,12 @@
+//認知のバグ
+//手弾きで和音を鳴らすと一つ音が鳴らないことがあります。
+
+//setup()内のコメントアウトを外して、Tunes.hの
+//  int DAC_OUT = 25;
+//をint DAC_OUT = 26;に変更して
+//Bottomモジュールに出ているGPIO25と26の間に50k程度の
+//可変抵抗を挟むとある程度音量制御ができます。
+
 #include <M5Stack.h>
 #include <driver/dac.h> //Arduino-ESP32 driver
 #include <MIDI.h>
@@ -8,7 +17,7 @@ Tunes tunes;
 
 void setup() {
   M5.begin();
-  //   dacWrite(25, 0); // Speaker OFF
+  //  dacWrite(25, 0); // Speaker OFF
   //  ledcDetachPin(SPEAKER_PIN);
   //  pinMode(SPEAKER_PIN, INPUT);
   MIDI.begin();
@@ -19,10 +28,12 @@ void setup() {
 
   M5.Lcd.setTextSize(3);
   M5.Lcd.setCursor(50, 0);
-  M5.Lcd.print("ina 3Voice");
-  M5.Lcd.setTextSize(2);
-  M5.Lcd.setCursor(10, 40);
-
+  M5.Lcd.print("Simple 3Voice");
+  M5.Lcd.setCursor(160, 30);
+  M5.Lcd.print("Synth");
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.setCursor(180, 60);
+  M5.Lcd.print("Powered by @ina_ani");
 }
 
 int vt[3];
