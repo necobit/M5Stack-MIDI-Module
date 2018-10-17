@@ -393,7 +393,7 @@ void loop()
 
       M5.Lcd.setCursor(0, 0); M5.Lcd.print("   x(74)   y(71)   z(1) ");
       M5.Lcd.setCursor(0,  24);
-      M5.Lcd.printf("% 6d  % 6d  % 6d     mg   \r\n",  (int)(100 * IMU.ax), (int)(100 * IMU.ay), (int)(100 * IMU.az));
+      M5.Lcd.printf("% 6d  % 6d  % 6d     mg   \r\n",  (int)(1000 * IMU.ax), (int)(1000 * IMU.ay), (int)(1000 * IMU.az));
       M5.Lcd.setCursor(0,  44);
       M5.Lcd.printf("% 6d  % 6d  % 6d     cc   \r\n", (int)(cc74), (int)(cc71), (int)(cc1));
       M5.Lcd.setCursor(0,  64);
