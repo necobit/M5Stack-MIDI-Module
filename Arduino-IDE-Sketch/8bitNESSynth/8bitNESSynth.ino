@@ -27,10 +27,10 @@ void setup() {
   M5.Lcd.setCursor(180, 90);
   M5.Lcd.print("Lixie Labs");
 
-  Tunes::outpin = 25;
+  Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して↓
   dacWrite(Tunes::outpin, 0);
-  //  ledcDetachPin(SPEAKER_PIN);
-  //  pinMode(SPEAKER_PIN, INPUT);
+  //ledcDetachPin(SPEAKER_PIN);   //ここのコメントアウトを↓
+  //pinMode(SPEAKER_PIN, INPUT);   //外して下さい。音量が下げられます。
   tunes.init();
   M5.Speaker.setVolume(1);
 
