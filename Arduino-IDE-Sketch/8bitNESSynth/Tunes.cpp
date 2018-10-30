@@ -12,6 +12,7 @@ volatile uint16_t Tunes::voice[3] = {0, 0, 0};
 volatile uint16_t Tunes::bnno[3] = {0, 0, 0};
 volatile uint16_t Tunes::counter = 0;
 volatile uint8_t Tunes::p1_wave_index = 2;
+volatile uint8_t Tunes::p2_wave_index = 0;
 volatile uint8_t Tunes::duty_point = 0;
 volatile uint8_t Tunes::duty_table [4][8] = {
   {0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%
@@ -20,7 +21,14 @@ volatile uint8_t Tunes::duty_table [4][8] = {
   {1, 1, 1, 1, 1, 1, 0, 0}, // 25% (inv.)
 };
 
+volatile uint8_t Tunes::tri_table[32] = {
+      15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    };
+
+
 int Tunes::PulseValues[4][256];
+int Tunes::TriValues[256];
 
 hw_timer_t* Tunes::timer;
 unsigned long Tunes::tones[] = {
@@ -154,44 +162,23 @@ unsigned long Tunes::tones[] = {
   36619
 };
 
-void Tunes::pinset(uint8_t p1_p, uint8_t p2_p, uint8_t n_p, uint8_t t_p) {
-  p1_pin = p1_p;
-  p2_pin = p2_p;
-  n_pin = n_p;
-  t_pin = t_p;
-
-  sigmaDeltaSetup(p1_channel, 88200);
-  sigmaDeltaAttachPin(p1_pin, p1_channel);
-  sigmaDeltaWrite(p1_channel, 0);
-
-  sigmaDeltaSetup(p2_channel, 88200);
-  sigmaDeltaAttachPin(p2_pin, p2_channel);
-  sigmaDeltaWrite(p2_channel, 0);
-
-  sigmaDeltaSetup(n_channel, 88200);
-  sigmaDeltaAttachPin(n_pin, n_channel);
-  sigmaDeltaWrite(n_channel, 0);
-
-  sigmaDeltaSetup(t_channel, 88200);
-  sigmaDeltaAttachPin(t_pin, t_channel);
-  sigmaDeltaWrite(t_channel, 0);
-
-}
-
 void Tunes::noteon(uint8_t mch, uint8_t nno, uint8_t vel) {
   voice[mch - 1] = nno;
   d[mch - 1] = (uint16_t)(Tunes::tones[nno]);
+  Serial.print("CH");
+  Serial.print(mch);
   Serial.print("ON");
-  Serial.println(voice[0]);
+  Serial.println(voice[mch - 1]);
 }
 
 void Tunes::noteoff(uint8_t mch, uint8_t nno, uint8_t vel) {
   if (voice[mch - 1] == nno) {
+      Serial.print("CH");
+  Serial.print(mch);
     Serial.print("OFF");
-    Serial.println(voice[0]);
+    Serial.println(voice[mch - 1]);
     voice[mch - 1] = 0;
     d[mch - 1] = 0;
-    bnno[mch -1] = nno;
   }
 }
 
@@ -205,19 +192,25 @@ void Tunes::onTimer() {
   portEXIT_CRITICAL_ISR(&Tunes::timerMux);
 
   int out = 0;
-  out += Tunes::PulseValues[p1_wave_index][(osc1 >> 8)];
-if (d[0] + d[1] + d[2] == 0) out = 0; 
-  dacWrite(25, (out / 64));
+  out += Tunes::PulseValues[p1_wave_index][(osc1 >> 8)] * 0.5;
+  out += Tunes::PulseValues[p2_wave_index][(osc2 >> 8)] * 0.5;
+  out += Tunes::TriValues[(osc3 >> 8)];
+  dacWrite(25, (out/16));
 }
 
 void Tunes::init() {
-
-  float ConversionFactor = (2 * PI) / 256;  // convert my 0-255 bits in a circle to radians
-  float RadAngle;                           // Angle in Radians
+/*  sigmaDeltaSetup(0, 88200);
+  sigmaDeltaAttachPin(26, 0);
+    sigmaDeltaAttachPin(25, 1);
+  sigmaDeltaWrite(0, 0);
+*/
+  
   for (int p_select = 0; p_select < 4; p_select ++) {
     for (int MyAngle = 0; MyAngle < 256; MyAngle++) {
       Tunes::PulseValues[p_select][MyAngle] = duty_table[p_select][MyAngle / 32] < 1 ? 0 : 255;
-      Serial.print(PulseValues[p_select][MyAngle]);
+//      Serial.print(PulseValues[p_select][MyAngle]);
+      Tunes::TriValues[MyAngle] = (tri_table[MyAngle / 8] + 1) * 16 - 1;
+Serial.print(TriValues[MyAngle]);
     }
     Serial.println(p_select);
   }

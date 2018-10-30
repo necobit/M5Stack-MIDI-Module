@@ -19,10 +19,12 @@ class Tunes
     static volatile uint16_t bnno[3];
     static volatile uint8_t duty_table[4][8];
     static volatile uint8_t p1_wave_index;
+    static volatile uint8_t p2_wave_index;
+    static volatile uint8_t tri_table[32];
     static volatile uint8_t duty_point;
     static volatile uint16_t counter;
     static unsigned long tones[128];
-    static int SineValues[256];
+    static int TriValues[256];
     static int PulseValues[4][256];
     static hw_timer_t* timer;
 
@@ -38,34 +40,8 @@ class Tunes
     void pause();
     void resume();
 
-    const uint32_t NES_APU_FREQ =  1789773 / 2 / 2; // APU is half speed of NES CPU, and we are running half the resolution of that to stay light.
-    const uint32_t cycle_period = F_CPU / NES_APU_FREQ;
-
-    const uint16_t audio_rate = 44100;
-    const uint32_t audio_period = 80000000 / audio_rate;
-    uint32_t next_audio = 0;
-
-    uint32_t next_cycle = 0;
-    uint32_t cpu_cycles = 0;
-    uint32_t apu_cycles = 0;
-
-    uint32_t t_last = 0;
-    uint32_t cycles_delta = 0;
-    uint32_t cycles_so_far = 0;
-
-    const uint8_t audio_divisor = 2;
-    uint8_t audio_counter = 0;
-
-
-
-
     const uint16_t noise_table[16] = {
       4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
-    };
-
-    const uint8_t tri_table[32] = {
-      15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
     };
 
   private:
@@ -86,7 +62,6 @@ class Tunes
     // Pulse 2 Variables
     uint8_t p2_output = 0;
     int16_t p2_11_bit_timer = 0;
-    uint8_t p2_wave_index = 1;
     uint16_t p2_length_counter = 0;
     uint8_t p2_envelope_divider = 0;
     uint8_t p2_decay_counter = 0;
@@ -114,16 +89,6 @@ class Tunes
     uint16_t t_linear_counter = 0;
     uint8_t t_channel = 3;
     uint8_t t_pin = 26;
-
-    uint32_t vgm_index = 0;
-    uint16_t vgm_wait = 0;
-    bool NES_PLAYING = false;
-
-    uint32_t VGM_EOF_OFFSET = 0;
-    uint32_t VGM_TOTAL_NUM_SAMPLES = 0;
-    uint32_t VGM_RATE = 0;
-    uint32_t VGM_DATA_OFFSET = 0;
-    uint32_t VGM_NES_APU_CLOCK = 0;
 
 };
 

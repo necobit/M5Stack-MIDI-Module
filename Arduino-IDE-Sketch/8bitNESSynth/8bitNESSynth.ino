@@ -6,14 +6,9 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, MIDI);
 #include "Tunes.h"
 Tunes tunes;
 
-const uint8_t PULSE_1_PIN  = 26;
-const uint8_t PULSE_2_PIN  = 26;
-const uint8_t NOISE_PIN    = 26;
-const uint8_t TRIANGLE_PIN = 26;
-
 void setup() {
   M5.begin();
-  MIDI.begin();
+  MIDI.begin(MIDI_CHANNEL_OMNI);
   MIDI.turnThruOff();
   M5.Lcd.setTextSize(3);
   M5.Lcd.setCursor(50, 0);
@@ -23,13 +18,20 @@ void setup() {
   M5.Lcd.setTextSize(1);
   M5.Lcd.setCursor(180, 60);
   M5.Lcd.print("by necobit");
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.setCursor(160, 70);
+  M5.Lcd.print("Special Thanks");
+  M5.Lcd.setTextSize(1);
+  M5.Lcd.setCursor(180, 80);
+  M5.Lcd.print("@ina_ani");
+  M5.Lcd.setCursor(180, 90);
+  M5.Lcd.print("Lixie Labs");
 
-//  dacWrite(25, 0); // Speaker OFF
+  dacWrite(25, 0);
 //  ledcDetachPin(SPEAKER_PIN);
 //  pinMode(SPEAKER_PIN, INPUT);
   tunes.init();
   M5.Speaker.setVolume(1);
-  //  tunes.pinset(PULSE_1_PIN, PULSE_2_PIN, NOISE_PIN, TRIANGLE_PIN);
 
 }
 
