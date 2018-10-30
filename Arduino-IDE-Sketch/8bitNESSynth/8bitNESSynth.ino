@@ -24,9 +24,9 @@ void setup() {
   M5.Lcd.setCursor(180, 60);
   M5.Lcd.print("by necobit");
 
-  dacWrite(25, 0); // Speaker OFF
-  ledcDetachPin(SPEAKER_PIN);
-  pinMode(SPEAKER_PIN, INPUT);
+//  dacWrite(25, 0); // Speaker OFF
+//  ledcDetachPin(SPEAKER_PIN);
+//  pinMode(SPEAKER_PIN, INPUT);
   tunes.init();
   M5.Speaker.setVolume(1);
   //  tunes.pinset(PULSE_1_PIN, PULSE_2_PIN, NOISE_PIN, TRIANGLE_PIN);
