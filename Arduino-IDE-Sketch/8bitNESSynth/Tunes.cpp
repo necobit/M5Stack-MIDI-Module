@@ -206,8 +206,8 @@ void Tunes::onTimer() {
 
   int out = 0;
   out += Tunes::PulseValues[p1_wave_index][(osc1 >> 8)];
-
-  dacWrite(25, (out / 16));
+if (d[0] + d[1] + d[2] == 0) out = 0; 
+  dacWrite(25, (out / 64));
 }
 
 void Tunes::init() {
