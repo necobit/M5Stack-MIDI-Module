@@ -27,6 +27,7 @@ class Tunes
     static int TriValues[256];
     static int PulseValues[4][256];
     static hw_timer_t* timer;
+    static volatile uint8_t outpin;
 
     void noteon(uint8_t mch, uint8_t nno, uint8_t vel);
     void noteoff(uint8_t mch, uint8_t nno, uint8_t vel);

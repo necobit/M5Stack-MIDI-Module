@@ -27,9 +27,10 @@ void setup() {
   M5.Lcd.setCursor(180, 90);
   M5.Lcd.print("Lixie Labs");
 
-  dacWrite(25, 0);
-//  ledcDetachPin(SPEAKER_PIN);
-//  pinMode(SPEAKER_PIN, INPUT);
+  Tunes::outpin = 25;
+  dacWrite(Tunes::outpin, 0);
+  //  ledcDetachPin(SPEAKER_PIN);
+  //  pinMode(SPEAKER_PIN, INPUT);
   tunes.init();
   M5.Speaker.setVolume(1);
 

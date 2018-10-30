@@ -4,6 +4,7 @@ volatile SemaphoreHandle_t Tunes::timerSemaphore;
 portMUX_TYPE Tunes::timerMux = portMUX_INITIALIZER_UNLOCKED;
 volatile uint32_t Tunes::isrCounter = 0;
 volatile uint32_t Tunes::lastIsrAt = 0;
+volatile uint8_t Tunes::outpin = 25;
 volatile uint16_t Tunes::osc1 = 0;
 volatile uint16_t Tunes::osc2 = 0;
 volatile uint16_t Tunes::osc3 = 0;
@@ -22,9 +23,9 @@ volatile uint8_t Tunes::duty_table [4][8] = {
 };
 
 volatile uint8_t Tunes::tri_table[32] = {
-      15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-    };
+  15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+};
 
 
 int Tunes::PulseValues[4][256];
@@ -173,8 +174,8 @@ void Tunes::noteon(uint8_t mch, uint8_t nno, uint8_t vel) {
 
 void Tunes::noteoff(uint8_t mch, uint8_t nno, uint8_t vel) {
   if (voice[mch - 1] == nno) {
-      Serial.print("CH");
-  Serial.print(mch);
+    Serial.print("CH");
+    Serial.print(mch);
     Serial.print("OFF");
     Serial.println(voice[mch - 1]);
     voice[mch - 1] = 0;
@@ -195,22 +196,17 @@ void Tunes::onTimer() {
   out += Tunes::PulseValues[p1_wave_index][(osc1 >> 8)] * 0.5;
   out += Tunes::PulseValues[p2_wave_index][(osc2 >> 8)] * 0.5;
   out += Tunes::TriValues[(osc3 >> 8)];
-  dacWrite(25, (out/16));
+  dacWrite(Tunes::outpin, (out / 16));
 }
 
 void Tunes::init() {
-/*  sigmaDeltaSetup(0, 88200);
-  sigmaDeltaAttachPin(26, 0);
-    sigmaDeltaAttachPin(25, 1);
-  sigmaDeltaWrite(0, 0);
-*/
-  
+
   for (int p_select = 0; p_select < 4; p_select ++) {
     for (int MyAngle = 0; MyAngle < 256; MyAngle++) {
       Tunes::PulseValues[p_select][MyAngle] = duty_table[p_select][MyAngle / 32] < 1 ? 0 : 255;
-//      Serial.print(PulseValues[p_select][MyAngle]);
+      //      Serial.print(PulseValues[p_select][MyAngle]);
       Tunes::TriValues[MyAngle] = (tri_table[MyAngle / 8] + 1) * 16 - 1;
-Serial.print(TriValues[MyAngle]);
+      Serial.print(TriValues[MyAngle]);
     }
     Serial.println(p_select);
   }
