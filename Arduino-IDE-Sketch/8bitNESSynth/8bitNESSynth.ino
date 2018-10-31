@@ -1,4 +1,4 @@
-//NES Like Synth ver. 0.2
+//NES Like Synth ver. 0.3
 //M5Stack用MIDIモジュールを利用したファミコン風音源です。
 //https://necobit.base.shop/items/14047506
 //MIDIモジュールはこちらで販売しています。
