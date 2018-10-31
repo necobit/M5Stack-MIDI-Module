@@ -51,7 +51,6 @@ void setup() {
 int p_output;
 
 void loop() {
-  tunes.resume();
   tunes.run();
 
   int ch, data1, data2;
@@ -76,5 +75,16 @@ void loop() {
     tunes.noteoff(ch, data1, data2);
     portEXIT_CRITICAL(&Tunes::timerMux);
   }
+  else if (MIDI.getType() == midi::ProgramChange)
+  {
+    ch = MIDI.getChannel();
+    data1 = MIDI.getData1();
+    data2 = MIDI.getData2();
+    portENTER_CRITICAL(&Tunes::timerMux);
+    tunes.pchange(ch, data1);
+    portEXIT_CRITICAL(&Tunes::timerMux);
+  }
+
+
   M5.update();
 }

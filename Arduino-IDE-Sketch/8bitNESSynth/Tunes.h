@@ -14,23 +14,32 @@ class Tunes
     static volatile uint16_t osc1;
     static volatile uint16_t osc2;
     static volatile uint16_t osc3;
-    static volatile uint16_t d[3];
-    static volatile uint16_t voice[3];
-    static volatile uint16_t bnno[3];
+    static volatile uint16_t osc4;
+    static volatile uint16_t d[4];
+    static volatile uint16_t voice[4];
+    static volatile uint16_t bnno[4];
     static volatile uint8_t duty_table[4][8];
-    static volatile uint8_t p1_wave_index;
-    static volatile uint8_t p2_wave_index;
+    static volatile uint8_t wave_index[2];
+
+    static volatile int n_reg;
+    static volatile int shortFreq;
+
     static volatile uint8_t tri_table[32];
+    static volatile uint16_t noise_table[16];
     static volatile uint8_t duty_point;
     static volatile uint16_t counter;
     static unsigned long tones[128];
     static int TriValues[256];
     static int PulseValues[4][256];
+    static int NoiseValues[256];
+    
     static hw_timer_t* timer;
     static volatile uint8_t outpin;
 
     void noteon(uint8_t mch, uint8_t nno, uint8_t vel);
     void noteoff(uint8_t mch, uint8_t nno, uint8_t vel);
+    void pchange(uint8_t mch, uint8_t patch);
+    
     void sample_audio();
     void render_audio();
 
@@ -40,10 +49,6 @@ class Tunes
     void run();
     void pause();
     void resume();
-
-    const uint16_t noise_table[16] = {
-      4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
-    };
 
   private:
 
