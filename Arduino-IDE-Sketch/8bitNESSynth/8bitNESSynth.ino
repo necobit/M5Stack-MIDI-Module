@@ -18,6 +18,7 @@
 //
 //認知の不具合
 //音に周期的な変化がある
+//減衰の消え際が急
 
 #include <M5Stack.h>
 #include <driver/dac.h>
