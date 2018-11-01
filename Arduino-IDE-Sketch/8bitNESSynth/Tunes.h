@@ -18,6 +18,10 @@ class Tunes
     static volatile uint16_t d[4];
     static volatile uint16_t voice[4];
     static volatile uint16_t bnno[4];
+    static volatile uint8_t decay[4];
+    static volatile int32_t decay_counter[4];
+    static volatile uint8_t atack[4];
+    static volatile uint32_t atack_counter[4];
     static volatile uint8_t duty_table[4][8];
     static volatile uint8_t wave_index[2];
 
@@ -37,7 +41,7 @@ class Tunes
     static volatile uint8_t outpin;
 
     void noteon(uint8_t mch, uint8_t nno, uint8_t vel);
-    void noteoff(uint8_t mch, uint8_t nno, uint8_t vel);
+    void noteoff(uint8_t mch, uint8_t nno);
     void pchange(uint8_t mch, uint8_t patch);
     
     void sample_audio();
