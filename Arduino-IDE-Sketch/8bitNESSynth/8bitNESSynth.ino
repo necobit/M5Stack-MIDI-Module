@@ -60,10 +60,10 @@ void setup() {
   M5.Lcd.fillCircle(250, 180, 8 , 0xE8E4);
   M5.Lcd.fillCircle(290, 180, 20 , 0xE8E4);
 
-  Tunes::outpin = 26;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して↓
+  Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して↓
   dacWrite(25, 0);
-  ledcDetachPin(SPEAKER_PIN);   //ここのコメントアウトを↓
-  pinMode(SPEAKER_PIN, INPUT);   //外して下さい。音量が下げられます。
+//  ledcDetachPin(SPEAKER_PIN);   //ここのコメントアウトを↓
+//  pinMode(SPEAKER_PIN, INPUT);   //外して下さい。音量が下げられます。
   tunes.init();
   M5.Speaker.setVolume(1);
 
