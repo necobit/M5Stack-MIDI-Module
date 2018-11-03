@@ -13,6 +13,7 @@ volatile uint16_t Tunes::osc4 = 0;
 volatile uint16_t Tunes::d[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::voice[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::bnno[4] = {0, 0, 0, 0};
+volatile uint8_t Tunes::vol[4] = {100,100,100,100};
 volatile uint8_t Tunes::atack[4] = {64, 64, 64, 64};
 volatile uint32_t Tunes::atack_counter[4] = {0, 0, 0, 0};
 volatile uint8_t Tunes::decay[4] = {64, 64, 64, 64};
@@ -179,7 +180,7 @@ unsigned long Tunes::tones[] = {
 void Tunes::noteon(uint8_t mch, uint8_t nno, uint8_t vel) {
   voice[mch - 1] = nno;
   d[mch - 1] = (uint16_t)(Tunes::tones[nno]);
-  decay_counter[mch - 1] = 88200; 
+  decay_counter[mch - 1] = 88200;
   /*
     Serial.print("CH");
     Serial.print(mch);
@@ -196,10 +197,10 @@ void Tunes::noteoff(uint8_t mch, uint8_t nno) {
       Serial.print("OFF");
       Serial.println(voice[mch - 1]);
     */
-      portENTER_CRITICAL_ISR(&Tunes::timerMux);
+    portENTER_CRITICAL_ISR(&Tunes::timerMux);
     voice[mch - 1] = 0;
     d[mch - 1] = 0;
-      portEXIT_CRITICAL_ISR(&Tunes::timerMux);
+    portEXIT_CRITICAL_ISR(&Tunes::timerMux);
   }
 }
 
@@ -221,7 +222,7 @@ void Tunes::onTimer() {
   Tunes::osc3 += d[2];
   Tunes::osc4 += d[3];
 
-//Noise生成
+  //Noise生成
   if (Tunes::d[3] != 0) {
     counter = counter + 1  ;
     if (counter > 127 - (voice[3] * 2)) {
@@ -232,30 +233,30 @@ void Tunes::onTimer() {
   }
   boolean nsw = d[3];
 
-//Decay計算
+  //Decay計算
 
-for (int i = 0;i < 4;i ++){
-  if (decay[i] < 64 && d[i] != 0 && decay_counter[i] != 0){
-   decay_counter[i] = decay_counter[i] - (64 - decay[i]);
-   if ( decay_counter[i] <= 0 ){
-    decay_counter[i] = 0;
-   }
+  for (int i = 0; i < 4; i ++) {
+    if (decay[i] < 64 && d[i] != 0 && decay_counter[i] != 0) {
+      decay_counter[i] = decay_counter[i] - (64 - decay[i]);
+      if ( decay_counter[i] <= 0 ) {
+        decay_counter[i] = 0;
+      }
+    }
   }
-} 
 
-//出力計算
+  //出力計算
   int out = 0;
-  out += Tunes::PulseValues[wave_index[0]][(osc1 >> 8)] * 0.5 * decay_counter[0] / 88200;
-  out += Tunes::PulseValues[wave_index[1]][(osc2 >> 8)] * 0.5 * decay_counter[1] / 88200;
+  out += Tunes::PulseValues[wave_index[0]][(osc1 >> 8)] * 0.8 * decay_counter[0] / 88200 * vol[0] / 127;
+  out += Tunes::PulseValues[wave_index[1]][(osc2 >> 8)] * 0.8 * decay_counter[1] / 88200 * vol[1] / 127;
   out += Tunes::TriValues[(osc3 >> 8)] * decay_counter[2] / 88200;
-  out += Tunes::n_reg & 1 * nsw * 48 * decay_counter[3] / 88200;
+  out += Tunes::n_reg & 1 * nsw * 128   * decay_counter[3] / 88200 * vol[3] / 127;
 
-if(d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
+  if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
 
-//出力
+  //出力
   dacWrite(Tunes::outpin, (out / 16));
 
-    portEXIT_CRITICAL_ISR(&Tunes::timerMux);
+  portEXIT_CRITICAL_ISR(&Tunes::timerMux);
 
   xSemaphoreGiveFromISR(Tunes::timerSemaphore, NULL);
 }

@@ -60,10 +60,14 @@ void setup() {
   M5.Lcd.fillCircle(250, 180, 8 , 0xE8E4);
   M5.Lcd.fillCircle(290, 180, 20 , 0xE8E4);
 
-  Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して↓
+  Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して
+                       //GPIO25と26の間にかましてください。音量が下げられます。
+
   dacWrite(25, 0);
-//  ledcDetachPin(SPEAKER_PIN);   //ここのコメントアウトを↓
-//  pinMode(SPEAKER_PIN, INPUT);   //外して下さい。音量が下げられます。
+  if (Tunes::outpin == 26){
+  ledcDetachPin(SPEAKER_PIN);
+  pinMode(SPEAKER_PIN, INPUT);
+  }
   tunes.init();
   M5.Speaker.setVolume(1);
 
@@ -108,7 +112,13 @@ void loop() {
     ch = MIDI.getChannel();
     data1 = MIDI.getData1();
     data2 = MIDI.getData2();
-    if (data1 == 75) Tunes::decay[ch - 1] = data2;
+    if (data1 == 7) Tunes::vol[ch - 1] = data2;
+    else if (data1 == 75) Tunes::decay[ch - 1] = data2;
+    Serial.print(ch);
+    Serial.print(":");
+    Serial.print(data1);
+    Serial.print(",");
+    Serial.println(data2);
   }
 
   M5.update();
