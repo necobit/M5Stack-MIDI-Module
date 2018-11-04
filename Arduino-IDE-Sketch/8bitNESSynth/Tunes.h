@@ -11,14 +11,16 @@ class Tunes
 
     static volatile uint32_t isrCounter;
     static volatile uint32_t lastIsrAt;
-    static volatile uint16_t osc1;
-    static volatile uint16_t osc2;
-    static volatile uint16_t osc3;
-    static volatile uint16_t osc4;
+    static volatile uint16_t osc[4];
     static volatile uint16_t d[4];
     static volatile uint16_t voice[4];
     static volatile uint16_t bnno[4];
+    static float bend[481];
+    static volatile float chbend[4];
+    static volatile uint16_t pold[4];
+    static volatile uint8_t pbrange[4];
     static volatile uint8_t vol[4];
+    static volatile uint8_t exp[4];
     static volatile uint8_t velo[4];
     static volatile uint8_t decay[4];
     static volatile int32_t decay_counter[4];
@@ -45,6 +47,7 @@ class Tunes
     void noteon(uint8_t mch, uint8_t nno, uint8_t vel);
     void noteoff(uint8_t mch, uint8_t nno);
     void pchange(uint8_t mch, uint8_t patch);
+    void pbend(uint8_t mch, uint8_t data1, uint8_t data2);
     
     void sample_audio();
     void render_audio();

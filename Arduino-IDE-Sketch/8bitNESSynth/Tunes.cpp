@@ -6,15 +6,16 @@ volatile uint32_t Tunes::isrCounter = 0;
 volatile uint32_t Tunes::lastIsrAt = 0;
 volatile uint8_t Tunes::outpin = 25;
 
-volatile uint16_t Tunes::osc1 = 0;
-volatile uint16_t Tunes::osc2 = 0;
-volatile uint16_t Tunes::osc3 = 0;
-volatile uint16_t Tunes::osc4 = 0;
+volatile uint16_t Tunes::osc[4] = {0,0,0,0};
 volatile uint16_t Tunes::d[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::voice[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::bnno[4] = {0, 0, 0, 0};
-volatile uint8_t Tunes::vol[4] = {100,100,100,100};
-volatile uint8_t Tunes::velo[4] = {100,100,100,100};
+volatile uint8_t Tunes::vol[4] = {100, 100, 100, 100};
+volatile uint8_t Tunes::exp[4] = {127, 127, 127, 127};
+volatile uint8_t Tunes::velo[4] = {100, 100, 100, 100};
+volatile float Tunes::chbend[4] = {1, 1, 1, 1};
+volatile uint16_t Tunes::pold[4] = {1, 1, 1, 1};
+volatile uint8_t Tunes::pbrange[4] = {2, 2, 2, 2};
 volatile uint8_t Tunes::atack[4] = {64, 64, 64, 64};
 volatile uint32_t Tunes::atack_counter[4] = {0, 0, 0, 0};
 volatile uint8_t Tunes::decay[4] = {64, 64, 64, 64};
@@ -47,6 +48,141 @@ int Tunes::TriValues[256];
 int Tunes::NoiseValues[256];
 
 hw_timer_t* Tunes::timer;
+
+void Tunes::noteon(uint8_t mch, uint8_t nno, uint8_t vel) {
+  voice[mch - 1] = nno;
+  d[mch - 1] = (uint16_t)(Tunes::tones[nno]);
+  decay_counter[mch - 1] = 88200;
+  velo[mch - 1] = vel;
+
+    Serial.print("CH");
+    Serial.print(mch);
+    Serial.print("ON");
+    Serial.println(d[mch - 1]);
+
+}
+
+void Tunes::noteoff(uint8_t mch, uint8_t nno) {
+  if (voice[mch - 1] == nno) {
+    /*
+      Serial.print("CH");
+      Serial.print(mch);
+      Serial.print("OFF");
+      Serial.println(voice[mch - 1]);
+    */
+    portENTER_CRITICAL_ISR(&Tunes::timerMux);
+    voice[mch - 1] = 0;
+    d[mch - 1] = 0;
+    portEXIT_CRITICAL_ISR(&Tunes::timerMux);
+  }
+}
+
+void Tunes::pchange(uint8_t mch, uint8_t patch) {
+  if (mch <= 2 && patch <= 3) {
+    wave_index[mch - 1] = patch;
+  }
+  if (mch == 4 && patch <= 2 ) {
+    shortFreq = patch;
+  }
+}
+
+void Tunes::pbend(uint8_t mch, uint8_t data1, uint8_t data2) {
+  int fusion = data2;
+  fusion = fusion << 7;
+  fusion = fusion + data1;
+  if ( fusion != pold[mch - 1]){
+  chbend[mch - 1] = bend[map(fusion, 0, 16383, 240 - (pbrange[mch - 1] * 20), 240 + (pbrange[mch - 1] * 20)) ];
+  boolean onoff = voice[mch - 1];
+  d[mch - 1] = Tunes::tones[voice[mch - 1]] * chbend[mch - 1] * onoff;
+  Serial.print(fusion);
+  Serial.println(pold[mch - 1]);
+  pold[mch -1] = fusion;
+  }
+}
+
+void Tunes::onTimer() {
+  portENTER_CRITICAL_ISR(&Tunes::timerMux);
+  Tunes::isrCounter++;
+  Tunes::lastIsrAt = millis();
+for (int i = 0 ;i <= 4;i ++){
+  Tunes::osc[i] += d[i];
+}
+
+  //Noise生成
+  if (Tunes::d[3] != 0) {
+    counter = counter + 1  ;
+    if (counter > 127 - (voice[3] * 2)) {
+      counter = 0;
+      Tunes::n_reg >>= 1;
+      Tunes::n_reg |= ((Tunes::n_reg ^ (Tunes::n_reg >> (shortFreq ? 6 : 1))) & 1) << 15;
+    }
+  }
+  boolean nsw = d[3];
+
+  //Decay計算
+
+  for (int i = 0; i < 4; i ++) {
+    if (decay[i] < 64 && d[i] != 0 && decay_counter[i] != 0) {
+      decay_counter[i] = decay_counter[i] - (64 - decay[i]);
+      if ( decay_counter[i] <= 0 ) {
+        decay_counter[i] = 0;
+      }
+    }
+  }
+
+  //出力計算
+  int out = 0;
+  out += Tunes::PulseValues[wave_index[0]][(osc[0] >> 8)] * 0.8 * decay_counter[0] / 88200 * vol[0] / 127 * velo[0] / 127 * exp[0] / 127;
+  out += Tunes::PulseValues[wave_index[1]][(osc[1] >> 8)] * 0.8 * decay_counter[1] / 88200 * vol[1] / 127 * velo[1] / 127 * exp[1] / 127;
+  out += Tunes::TriValues[(osc[2] >> 8)] * decay_counter[2] / 88200;
+  out += Tunes::n_reg & 1 * nsw * 128   * decay_counter[3] / 88200 * vol[3] / 127  * velo[3] / 127  * exp[3] / 127;
+
+  if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
+
+  //出力
+  dacWrite(Tunes::outpin, (out / 16));
+
+  portEXIT_CRITICAL_ISR(&Tunes::timerMux);
+
+  xSemaphoreGiveFromISR(Tunes::timerSemaphore, NULL);
+}
+
+void Tunes::init() {
+
+  for (int p_select = 0; p_select < 4; p_select ++) {
+    for (int MyAngle = 0; MyAngle < 256; MyAngle++) {
+      Tunes::PulseValues[p_select][MyAngle] = duty_table[p_select][MyAngle / 32] < 1 ? 0 : 255;
+      Tunes::TriValues[MyAngle] = (tri_table[MyAngle / 8] + 1) * 16 - 1;
+      Tunes::NoiseValues[MyAngle] = (noise_table[MyAngle / 16]);
+    }
+  }
+  Tunes::timerSemaphore = xSemaphoreCreateBinary();
+
+  Tunes::timer = timerBegin(0, 80, true); // /80 prescale = 1us = 1/1000000s = 1MHz
+  timerAttachInterrupt(Tunes::timer, &Tunes::onTimer, true);
+  timerAlarmWrite(Tunes::timer, 45, true);
+  timerAlarmEnable(Tunes::timer);
+}
+
+void Tunes::pause() {
+  timerAlarmDisable(Tunes::timer);
+}
+void Tunes::resume() {
+  timerAlarmEnable(Tunes::timer);
+}
+
+void Tunes::run() {
+  if (xSemaphoreTake(Tunes::timerSemaphore, 0) == pdTRUE) {
+    uint32_t isrCount = 0, isrTime = 0;
+
+    portENTER_CRITICAL(&Tunes::timerMux);
+    isrCount = Tunes::isrCounter;
+    isrTime = Tunes::lastIsrAt;
+    portEXIT_CRITICAL(&Tunes::timerMux);
+
+  }
+}
+
 unsigned long Tunes::tones[] = {
   25,
   26,
@@ -178,123 +314,488 @@ unsigned long Tunes::tones[] = {
   36619
 };
 
-void Tunes::noteon(uint8_t mch, uint8_t nno, uint8_t vel) {
-  voice[mch - 1] = nno;
-  d[mch - 1] = (uint16_t)(Tunes::tones[nno]);
-  decay_counter[mch - 1] = 88200;
-  velo[mch - 1] = vel;
-  /*
-    Serial.print("CH");
-    Serial.print(mch);
-    Serial.print("ON");
-    Serial.println(voice[mch - 1]);
-  */
-}
 
-void Tunes::noteoff(uint8_t mch, uint8_t nno) {
-  if (voice[mch - 1] == nno) {
-    /*
-      Serial.print("CH");
-      Serial.print(mch);
-      Serial.print("OFF");
-      Serial.println(voice[mch - 1]);
-    */
-    portENTER_CRITICAL_ISR(&Tunes::timerMux);
-    voice[mch - 1] = 0;
-    d[mch - 1] = 0;
-    portEXIT_CRITICAL_ISR(&Tunes::timerMux);
-  }
-}
+float Tunes::bend[] = {
+  0.5,
+  0.501446,
+  0.502896,
+  0.504351,
+  0.50581,
+  0.507273,
+  0.50874,
+  0.510211,
+  0.511687,
+  0.513167,
+  0.514651,
+  0.51614,
+  0.517632,
+  0.51913,
+  0.520631,
+  0.522137,
+  0.523647,
+  0.525162,
+  0.526681,
+  0.528204,
+  0.529732,
+  0.531264,
+  0.5328,
+  0.534341,
+  0.535887,
+  0.537437,
+  0.538991,
+  0.54055,
+  0.542113,
+  0.543681,
+  0.545254,
+  0.546831,
+  0.548412,
+  0.549999,
+  0.551589,
+  0.553185,
+  0.554785,
+  0.556389,
+  0.557999,
+  0.559612,
+  0.561231,
+  0.562854,
+  0.564482,
+  0.566115,
+  0.567752,
+  0.569394,
+  0.571041,
+  0.572693,
+  0.574349,
+  0.57601,
+  0.577676,
+  0.579347,
+  0.581023,
+  0.582703,
+  0.584389,
+  0.586079,
+  0.587774,
+  0.589474,
+  0.591179,
+  0.592889,
+  0.594604,
+  0.596323,
+  0.598048,
+  0.599778,
+  0.601513,
+  0.603252,
+  0.604997,
+  0.606747,
+  0.608502,
+  0.610262,
+  0.612027,
+  0.613797,
+  0.615572,
+  0.617353,
+  0.619138,
+  0.620929,
+  0.622725,
+  0.624526,
+  0.626332,
+  0.628144,
+  0.629961,
+  0.631783,
+  0.63361,
+  0.635442,
+  0.63728,
+  0.639124,
+  0.640972,
+  0.642826,
+  0.644685,
+  0.64655,
+  0.64842,
+  0.650295,
+  0.652176,
+  0.654062,
+  0.655954,
+  0.657851,
+  0.659754,
+  0.661662,
+  0.663576,
+  0.665495,
+  0.66742,
+  0.66935,
+  0.671286,
+  0.673228,
+  0.675175,
+  0.677128,
+  0.679086,
+  0.68105,
+  0.014852,
+  0.684996,
+  0.686977,
+  0.688964,
+  0.690956,
+  0.692955,
+  0.694959,
+  0.696969,
+  0.698985,
+  0.701007,
+  0.703034,
+  0.705068,
+  0.707107,
+  0.709152,
+  0.711203,
+  0.71326,
+  0.715323,
+  0.717392,
+  0.719467,
+  0.721548,
+  0.723635,
+  0.725728,
+  0.727827,
+  0.729932,
+  0.732043,
+  0.73416,
+  0.736284,
+  0.738413,
+  0.740549,
+  0.742691,
+  0.744839,
+  0.746993,
+  0.749154,
+  0.75132,
+  0.753493,
+  0.755673,
+  0.757858,
+  0.76005,
+  0.762249,
+  0.764453,
+  0.766664,
+  0.768882,
+  0.771105,
+  0.773336,
+  0.775572,
+  0.777816,
+  0.780065,
+  0.782321,
+  0.784584,
+  0.786853,
+  0.789129,
+  0.791412,
+  0.793701,
+  0.795996,
+  0.798298,
+  0.800607,
+  0.802923,
+  0.805245,
+  0.807574,
+  0.80991,
+  0.812252,
+  0.814602,
+  0.816958,
+  0.819321,
+  0.82169,
+  0.824067,
+  0.82645,
+  0.828841,
+  0.831238,
+  0.833642,
+  0.836053,
+  0.838471,
+  0.840896,
+  0.843329,
+  0.845768,
+  0.848214,
+  0.850667,
+  0.853128,
+  0.855595,
+  0.85807,
+  0.860551,
+  0.86304,
+  0.865537,
+  0.86804,
+  0.870551,
+  0.873068,
+  0.875594,
+  0.878126,
+  0.880666,
+  0.883213,
+  0.885768,
+  0.888329,
+  0.890899,
+  0.893475,
+  0.89606,
+  0.898651,
+  0.90125,
+  0.903857,
+  0.906471,
+  0.909093,
+  0.911722,
+  0.914359,
+  0.917004,
+  0.919656,
+  0.922316,
+  0.924984,
+  0.927659,
+  0.930342,
+  0.933033,
+  0.935732,
+  0.938438,
+  0.941152,
+  0.943874,
+  0.946604,
+  0.949342,
+  0.952088,
+  0.954842,
+  0.957603,
+  0.960373,
+  0.963151,
+  0.965936,
+  0.96873,
+  0.971532,
+  0.974342,
+  0.97716,
+  0.979986,
+  0.982821,
+  0.985663,
+  0.988514,
+  0.991373,
+  0.99424,
+  0.997116,
+  1,
+  1.002892,
+  1.005793,
+  1.008702,
+  1.011619,
+  1.014545,
+  1.01748,
+  1.020423,
+  1.023374,
+  1.026334,
+  1.029302,
+  1.032279,
+  1.035265,
+  1.038259,
+  1.041262,
+  1.044274,
+  1.047294,
+  1.050323,
+  1.053361,
+  1.056408,
+  1.059463,
+  1.062527,
+  1.065601,
+  1.068683,
+  1.071773,
+  1.074873,
+  1.077982,
+  1.0811,
+  1.084227,
+  1.087363,
+  1.090508,
+  1.093662,
+  1.096825,
+  1.099997,
+  1.103179,
+  1.10637,
+  1.109569,
+  1.112779,
+  1.115997,
+  1.119225,
+  1.122462,
+  1.125709,
+  1.128964,
+  1.13223,
+  1.135504,
+  1.138789,
+  1.142082,
+  1.145386,
+  1.148698,
+  1.152021,
+  1.155353,
+  1.158694,
+  1.162046,
+  1.165407,
+  1.168777,
+  1.172158,
+  1.175548,
+  1.178948,
+  1.182358,
+  1.185778,
+  1.189207,
+  1.192647,
+  1.196096,
+  1.199556,
+  1.203025,
+  1.206505,
+  1.209994,
+  1.213494,
+  1.217004,
+  1.220523,
+  1.224054,
+  1.227594,
+  1.231144,
+  1.234705,
+  1.238276,
+  1.241858,
+  1.24545,
+  1.249052,
+  1.252664,
+  1.256288,
+  1.259921,
+  1.263565,
+  1.26722,
+  1.270885,
+  1.274561,
+  1.278247,
+  1.281944,
+  1.285652,
+  1.28937,
+  1.2931,
+  1.29684,
+  1.30059,
+  1.304352,
+  1.308125,
+  1.311908,
+  1.315703,
+  1.319508,
+  1.323324,
+  1.327152,
+  1.33099,
+  1.33484,
+  1.338701,
+  1.342573,
+  1.346456,
+  1.35035,
+  1.354256,
+  1.358172,
+  1.362101,
+  1.36604,
+  1.369991,
+  1.373954,
+  1.377928,
+  1.381913,
+  1.38591,
+  1.389918,
+  1.393938,
+  1.39797,
+  1.402013,
+  1.406068,
+  1.410135,
+  1.414214,
+  1.418304,
+  1.422406,
+  1.42652,
+  1.430646,
+  1.434784,
+  1.438934,
+  1.443095,
+  1.447269,
+  1.451455,
+  1.455653,
+  1.459863,
+  1.464086,
+  1.46832,
+  1.472567,
+  1.476826,
+  1.481098,
+  1.485381,
+  1.489677,
+  1.493986,
+  1.498307,
+  1.502641,
+  1.506987,
+  1.511345,
+  1.515717,
+  1.5201,
+  1.524497,
+  1.528906,
+  1.533328,
+  1.537763,
+  1.542211,
+  1.546671,
+  1.551145,
+  1.555631,
+  1.56013,
+  1.564643,
+  1.569168,
+  1.573707,
+  1.578258,
+  1.582823,
+  1.587401,
+  1.591992,
+  1.596597,
+  1.601215,
+  1.605846,
+  1.61049,
+  1.615148,
+  1.61982,
+  1.624505,
+  1.629203,
+  1.633915,
+  1.638641,
+  1.643381,
+  1.648134,
+  1.652901,
+  1.657681,
+  1.662476,
+  1.667284,
+  1.672106,
+  1.676943,
+  1.681793,
+  1.686657,
+  1.691535,
+  1.696428,
+  1.701334,
+  1.706255,
+  1.71119,
+  1.716139,
+  1.721103,
+  1.726081,
+  1.731073,
+  1.73608,
+  1.741101,
+  1.746137,
+  1.751187,
+  1.756252,
+  1.761332,
+  1.766426,
+  1.771535,
+  1.776659,
+  1.781797,
+  1.786951,
+  1.792119,
+  1.797303,
+  1.802501,
+  1.807714,
+  1.812943,
+  1.818186,
+  1.823445,
+  1.828719,
+  1.834008,
+  1.839313,
+  1.844632,
+  1.849968,
+  1.855318,
+  1.860684,
+  1.866066,
+  1.871463,
+  1.876876,
+  1.882304,
+  1.887749,
+  1.893209,
+  1.898684,
+  1.904176,
+  1.909683,
+  1.915207,
+  1.920746,
+  1.926301,
+  1.931873,
+  1.93746,
+  1.943064,
+  1.948684,
+  1.95432,
+  1.959972,
+  1.965641,
+  1.971326,
+  1.977028,
+  1.982746,
+  1.988481,
+  1.994232,
+  2
+};
 
-void Tunes::pchange(uint8_t mch, uint8_t patch) {
-  if (mch <= 2 && patch <= 3) {
-    wave_index[mch - 1] = patch;
-  }
-  if (mch == 4 && patch <= 2 ) {
-    shortFreq = patch;
-  }
-}
-
-void Tunes::onTimer() {
-  portENTER_CRITICAL_ISR(&Tunes::timerMux);
-  Tunes::isrCounter++;
-  Tunes::lastIsrAt = millis();
-  Tunes::osc1 += d[0];
-  Tunes::osc2 += d[1];
-  Tunes::osc3 += d[2];
-  Tunes::osc4 += d[3];
-
-  //Noise生成
-  if (Tunes::d[3] != 0) {
-    counter = counter + 1  ;
-    if (counter > 127 - (voice[3] * 2)) {
-      counter = 0;
-      Tunes::n_reg >>= 1;
-      Tunes::n_reg |= ((Tunes::n_reg ^ (Tunes::n_reg >> (shortFreq ? 6 : 1))) & 1) << 15;
-    }
-  }
-  boolean nsw = d[3];
-
-  //Decay計算
-
-  for (int i = 0; i < 4; i ++) {
-    if (decay[i] < 64 && d[i] != 0 && decay_counter[i] != 0) {
-      decay_counter[i] = decay_counter[i] - (64 - decay[i]);
-      if ( decay_counter[i] <= 0 ) {
-        decay_counter[i] = 0;
-      }
-    }
-  }
-
-  //出力計算
-  int out = 0;
-  out += Tunes::PulseValues[wave_index[0]][(osc1 >> 8)] * 0.8 * decay_counter[0] / 88200 * vol[0] / 127 * velo[0] / 127;
-  out += Tunes::PulseValues[wave_index[1]][(osc2 >> 8)] * 0.8 * decay_counter[1] / 88200 * vol[1] / 127 * velo[1] / 127;
-  out += Tunes::TriValues[(osc3 >> 8)] * decay_counter[2] / 88200;
-  out += Tunes::n_reg & 1 * nsw * 128   * decay_counter[3] / 88200 * vol[3] / 127  * velo[3] / 127;
-
-  if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
-
-  //出力
-  dacWrite(Tunes::outpin, (out / 16));
-
-  portEXIT_CRITICAL_ISR(&Tunes::timerMux);
-
-  xSemaphoreGiveFromISR(Tunes::timerSemaphore, NULL);
-}
-
-void Tunes::init() {
-
-  for (int p_select = 0; p_select < 4; p_select ++) {
-    for (int MyAngle = 0; MyAngle < 256; MyAngle++) {
-      Tunes::PulseValues[p_select][MyAngle] = duty_table[p_select][MyAngle / 32] < 1 ? 0 : 255;
-      Tunes::TriValues[MyAngle] = (tri_table[MyAngle / 8] + 1) * 16 - 1;
-      Tunes::NoiseValues[MyAngle] = (noise_table[MyAngle / 16]);
-    }
-  }
-  Tunes::timerSemaphore = xSemaphoreCreateBinary();
-
-  Tunes::timer = timerBegin(0, 80, true); // /80 prescale = 1us = 1/1000000s = 1MHz
-  timerAttachInterrupt(Tunes::timer, &Tunes::onTimer, true);
-  timerAlarmWrite(Tunes::timer, 45, true);
-  timerAlarmEnable(Tunes::timer);
-}
-
-void Tunes::pause() {
-  timerAlarmDisable(Tunes::timer);
-}
-void Tunes::resume() {
-  timerAlarmEnable(Tunes::timer);
-}
-
-void Tunes::run() {
-  if (xSemaphoreTake(Tunes::timerSemaphore, 0) == pdTRUE) {
-    uint32_t isrCount = 0, isrTime = 0;
-
-    portENTER_CRITICAL(&Tunes::timerMux);
-    isrCount = Tunes::isrCounter;
-    isrTime = Tunes::lastIsrAt;
-    portEXIT_CRITICAL(&Tunes::timerMux);
-
-  }
-}

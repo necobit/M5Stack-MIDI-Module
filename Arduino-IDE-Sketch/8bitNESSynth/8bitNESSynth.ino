@@ -71,7 +71,8 @@ void setup() {
   M5.Speaker.setVolume(1);
 }
 
-int p_output;
+int onpu;
+boolean onpudraw;
 
 void loop() {
   tunes.run();
@@ -81,6 +82,16 @@ void loop() {
   {
     if (MIDI.getType() == midi::NoteOn)
     {
+      onpu ++;
+      if (onpu > 100 && !onpudraw ){
+          M5.Lcd.fillCircle(275, 140, 5 , 0xFFFF);
+                  onpudraw = 1;
+      }
+      else if (onpu > 200){
+          M5.Lcd.fillCircle(275, 140, 5 , 0x0000);
+          onpudraw = 0;
+      }
+      
       ch = MIDI.getChannel();
       data1 = MIDI.getData1();
       data2 = MIDI.getData2();
@@ -111,12 +122,34 @@ void loop() {
     data1 = MIDI.getData1();
     data2 = MIDI.getData2();
     if (data1 == 7) Tunes::vol[ch - 1] = data2;
+    else if (data1 == 11) Tunes::exp[ch - 1] = data2;
     else if (data1 == 75) Tunes::decay[ch - 1] = data2;
+    else if (data1 == 85) {
+      if (data2 <= 12) Tunes::pbrange[ch - 1] = data2;
+    }
+/*
     Serial.print(ch);
     Serial.print(":");
     Serial.print(data1);
     Serial.print(",");
     Serial.println(data2);
+*/
+  }
+    else if (MIDI.getType() == midi::PitchBend)
+  {
+    ch = MIDI.getChannel();
+    data1 = MIDI.getData1();
+    data2 = MIDI.getData2();
+    portENTER_CRITICAL(&Tunes::timerMux);
+    tunes.pbend(ch, data1, data2);
+    portEXIT_CRITICAL(&Tunes::timerMux);
+/*
+    Serial.print(ch);
+    Serial.print(":");
+    Serial.print(data1);
+    Serial.print(",");
+    Serial.println(data2);
+*/
   }
 
   M5.update();
