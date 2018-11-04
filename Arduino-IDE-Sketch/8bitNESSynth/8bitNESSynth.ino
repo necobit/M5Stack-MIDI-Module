@@ -62,7 +62,6 @@ void setup() {
 
   Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して
                        //GPIO25と26の間にかましてください。音量が下げられます。
-
   dacWrite(25, 0);
   if (Tunes::outpin == 26){
   ledcDetachPin(SPEAKER_PIN);
@@ -70,7 +69,6 @@ void setup() {
   }
   tunes.init();
   M5.Speaker.setVolume(1);
-
 }
 
 int p_output;

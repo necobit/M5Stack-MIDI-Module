@@ -14,6 +14,7 @@ volatile uint16_t Tunes::d[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::voice[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::bnno[4] = {0, 0, 0, 0};
 volatile uint8_t Tunes::vol[4] = {100,100,100,100};
+volatile uint8_t Tunes::velo[4] = {100,100,100,100};
 volatile uint8_t Tunes::atack[4] = {64, 64, 64, 64};
 volatile uint32_t Tunes::atack_counter[4] = {0, 0, 0, 0};
 volatile uint8_t Tunes::decay[4] = {64, 64, 64, 64};
@@ -181,6 +182,7 @@ void Tunes::noteon(uint8_t mch, uint8_t nno, uint8_t vel) {
   voice[mch - 1] = nno;
   d[mch - 1] = (uint16_t)(Tunes::tones[nno]);
   decay_counter[mch - 1] = 88200;
+  velo[mch - 1] = vel;
   /*
     Serial.print("CH");
     Serial.print(mch);
@@ -246,10 +248,10 @@ void Tunes::onTimer() {
 
   //出力計算
   int out = 0;
-  out += Tunes::PulseValues[wave_index[0]][(osc1 >> 8)] * 0.8 * decay_counter[0] / 88200 * vol[0] / 127;
-  out += Tunes::PulseValues[wave_index[1]][(osc2 >> 8)] * 0.8 * decay_counter[1] / 88200 * vol[1] / 127;
+  out += Tunes::PulseValues[wave_index[0]][(osc1 >> 8)] * 0.8 * decay_counter[0] / 88200 * vol[0] / 127 * velo[0] / 127;
+  out += Tunes::PulseValues[wave_index[1]][(osc2 >> 8)] * 0.8 * decay_counter[1] / 88200 * vol[1] / 127 * velo[1] / 127;
   out += Tunes::TriValues[(osc3 >> 8)] * decay_counter[2] / 88200;
-  out += Tunes::n_reg & 1 * nsw * 128   * decay_counter[3] / 88200 * vol[3] / 127;
+  out += Tunes::n_reg & 1 * nsw * 128   * decay_counter[3] / 88200 * vol[3] / 127  * velo[3] / 127;
 
   if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
 

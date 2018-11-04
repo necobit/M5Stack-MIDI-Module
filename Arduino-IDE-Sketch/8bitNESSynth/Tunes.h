@@ -19,6 +19,7 @@ class Tunes
     static volatile uint16_t voice[4];
     static volatile uint16_t bnno[4];
     static volatile uint8_t vol[4];
+    static volatile uint8_t velo[4];
     static volatile uint8_t decay[4];
     static volatile int32_t decay_counter[4];
     static volatile uint8_t atack[4];
