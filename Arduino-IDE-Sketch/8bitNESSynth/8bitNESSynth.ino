@@ -82,16 +82,6 @@ void loop() {
   {
     if (MIDI.getType() == midi::NoteOn)
     {
-      onpu ++;
-      if (onpu > 100 && !onpudraw ){
-          M5.Lcd.fillCircle(275, 140, 5 , 0xFFFF);
-                  onpudraw = 1;
-      }
-      else if (onpu > 200){
-          M5.Lcd.fillCircle(275, 140, 5 , 0x0000);
-          onpudraw = 0;
-      }
-      
       ch = MIDI.getChannel();
       data1 = MIDI.getData1();
       data2 = MIDI.getData2();
@@ -124,9 +114,7 @@ void loop() {
     if (data1 == 7) Tunes::vol[ch - 1] = data2;
     else if (data1 == 11) Tunes::exp[ch - 1] = data2;
     else if (data1 == 75) Tunes::decay[ch - 1] = data2;
-    else if (data1 == 85) {
-      if (data2 <= 12) Tunes::pbrange[ch - 1] = data2;
-    }
+    else if (data1 == 6 && data2 <= 24) Tunes::pbrange[ch - 1] = data2;
 /*
     Serial.print(ch);
     Serial.print(":");

@@ -15,7 +15,6 @@ class Tunes
     static volatile uint16_t d[4];
     static volatile uint16_t voice[4];
     static volatile uint16_t bnno[4];
-    static float bend[481];
     static volatile float chbend[4];
     static volatile uint16_t pold[4];
     static volatile uint8_t pbrange[4];
@@ -36,7 +35,6 @@ class Tunes
     static volatile uint16_t noise_table[16];
     static volatile uint8_t duty_point;
     static volatile uint16_t counter;
-    static unsigned long tones[128];
     static int TriValues[256];
     static int PulseValues[4][256];
     static int NoiseValues[256];
@@ -44,7 +42,7 @@ class Tunes
     static hw_timer_t* timer;
     static volatile uint8_t outpin;
 
-    void noteon(uint8_t mch, uint8_t nno, uint8_t vel);
+    void noteon(uint8_t mch, float nno, uint8_t vel);
     void noteoff(uint8_t mch, uint8_t nno);
     void pchange(uint8_t mch, uint8_t patch);
     void pbend(uint8_t mch, uint8_t data1, uint8_t data2);
