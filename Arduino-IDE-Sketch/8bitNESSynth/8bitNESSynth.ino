@@ -80,7 +80,7 @@ void loop() {
   tunes.run();
 
   int ch, data1, data2;
-  if (MIDI.read())
+  if (MIDI.read() && MIDI.getChannel() <= 4)
   {
     if (MIDI.getType() == midi::NoteOn)
     {
@@ -100,6 +100,7 @@ void loop() {
     tunes.noteoff(ch, data1);
     portEXIT_CRITICAL(&Tunes::timerMux);
   }
+
   else if (MIDI.getType() == midi::ProgramChange)
   {
     ch = MIDI.getChannel();
@@ -108,6 +109,7 @@ void loop() {
     tunes.pchange(ch, data1);
     portEXIT_CRITICAL(&Tunes::timerMux);
   }
+
   else if (MIDI.getType() == midi::ControlChange)
   {
     ch = MIDI.getChannel();
@@ -117,13 +119,6 @@ void loop() {
     else if (data1 == 11) Tunes::exp[ch - 1] = data2;
     else if (data1 == 75) Tunes::decay[ch - 1] = data2;
     else if (data1 == 6 && data2 <= 24) Tunes::pbrange[ch - 1] = data2;
-/*
-    Serial.print(ch);
-    Serial.print(":");
-    Serial.print(data1);
-    Serial.print(",");
-    Serial.println(data2);
-*/
   }
     else if (MIDI.getType() == midi::PitchBend)
   {
@@ -133,14 +128,7 @@ void loop() {
     portENTER_CRITICAL(&Tunes::timerMux);
     tunes.pbend(ch, data1, data2);
     portEXIT_CRITICAL(&Tunes::timerMux);
-/*
-    Serial.print(ch);
-    Serial.print(":");
-    Serial.print(data1);
-    Serial.print(",");
-    Serial.println(data2);
-*/
   }
 
-  M5.update();
+//  M5.update();
 }

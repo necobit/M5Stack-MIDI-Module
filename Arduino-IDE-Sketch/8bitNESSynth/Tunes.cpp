@@ -56,27 +56,12 @@ void Tunes::noteon(uint8_t mch, float nno, uint8_t vel) {
   d[mch - 1] = (uint16_t)(freq);
   decay_counter[mch - 1] = 88200;
   velo[mch - 1] = vel;
-  /*
-      Serial.print("CH");
-      Serial.print(mch);
-      Serial.print("ON");
-      Serial.println(d[mch - 1]);
-  */
-
 }
 
 void Tunes::noteoff(uint8_t mch, uint8_t nno) {
   if (voice[mch - 1] == nno) {
-    /*
-      Serial.print("CH");
-      Serial.print(mch);
-      Serial.print("OFF");
-      Serial.println(voice[mch - 1]);
-    */
-//    portENTER_CRITICAL_ISR(&Tunes::timerMux);
     voice[mch - 1] = 0;
     d[mch - 1] = 0;
-//    portEXIT_CRITICAL_ISR(&Tunes::timerMux);
   }
 }
 
@@ -141,7 +126,8 @@ void Tunes::onTimer() {
   if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
 
   //出力
-  dacWrite(Tunes::outpin, (out/16));
+//  dacWrite(Tunes::outpin, (out/16));
+  dacWrite(Tunes::outpin, (out/8));
 
   portEXIT_CRITICAL_ISR(&Tunes::timerMux);
 
