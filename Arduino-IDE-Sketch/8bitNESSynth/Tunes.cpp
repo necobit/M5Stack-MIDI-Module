@@ -126,8 +126,8 @@ void Tunes::onTimer() {
   if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
 
   //出力
-//  dacWrite(Tunes::outpin, (out/16));
-  dacWrite(Tunes::outpin, (out/8));
+  dacWrite(Tunes::outpin, (out/16));
+//  dacWrite(Tunes::outpin, (out/8));
 
   portEXIT_CRITICAL_ISR(&Tunes::timerMux);
 

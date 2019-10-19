@@ -33,7 +33,7 @@ Tunes tunes;
 void setup() {
   M5.begin();
   MIDI.begin(MIDI_CHANNEL_OMNI);
-  MIDI.turnThruOff();
+  MIDI.turnThruOn();
   M5.Lcd.setTextSize(3);
   M5.Lcd.setCursor(47, 0);
   M5.Lcd.print("8bit NES Like");
@@ -91,7 +91,7 @@ void loop() {
       tunes.noteon(ch, data1, data2);
       portEXIT_CRITICAL(&Tunes::timerMux);
     }
-  }
+
   else if (MIDI.getType() == midi::NoteOff)
   {
     ch = MIDI.getChannel();
@@ -129,6 +129,6 @@ void loop() {
     tunes.pbend(ch, data1, data2);
     portEXIT_CRITICAL(&Tunes::timerMux);
   }
-
+  }
 //  M5.update();
 }
