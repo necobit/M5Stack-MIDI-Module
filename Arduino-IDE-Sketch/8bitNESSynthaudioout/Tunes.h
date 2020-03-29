@@ -38,6 +38,8 @@ class Tunes
     static int TriValues[256];
     static int PulseValues[4][256];
     static int NoiseValues[256];
+
+    static volatile uint8_t M_vol;
     
     static hw_timer_t* timer;
     static volatile uint8_t outpin;

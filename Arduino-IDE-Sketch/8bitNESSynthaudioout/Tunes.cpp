@@ -7,6 +7,9 @@ volatile uint32_t Tunes::isrCounter = 0;
 volatile uint32_t Tunes::lastIsrAt = 0;
 volatile uint8_t Tunes::outpin = 25;
 
+volatile uint8_t Tunes::M_vol = 30;
+
+
 volatile uint16_t Tunes::osc[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::d[4] = {0, 0, 0, 0};
 volatile uint16_t Tunes::voice[4] = {0, 0, 0, 0};
@@ -126,8 +129,10 @@ void Tunes::onTimer() {
   if (d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 0) out = out * 0.9;
 
   //出力
-  dacWrite(Tunes::outpin, (out/16));
-//  dacWrite(Tunes::outpin, (out/8));
+//  dacWrite(Tunes::outpin, (out/16));
+  dacWrite(Tunes::outpin, (out*Tunes::M_vol/100));
+//  dacWrite(Tunes::outpin, (out/2));
+
 
   portEXIT_CRITICAL_ISR(&Tunes::timerMux);
 

@@ -52,7 +52,7 @@ void setup() {
   M5.Lcd.print("Lixie Labs");
 
 
-//Catbot
+  //Catbot
   M5.Lcd.fillRect(230, 150, 89, 70 , 0xFF80);
   M5.Lcd.fillTriangle(240, 150, 255, 130, 270, 150, 0xFF80);
   M5.Lcd.fillTriangle(280, 150, 295, 130, 310, 150, 0xFF80);
@@ -63,34 +63,84 @@ void setup() {
   M5.Lcd.fillCircle(290, 180, 20 , 0xE8E4);
 
   Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して
-                       //GPIO25と26の間にかましてください。音量が下げられます。
+  //GPIO25と26の間にかましてください。音量が下げられます。
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.setCursor(20, 200);
+  M5.Lcd.print("OUT:25");
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.setCursor(20, 160);
+  M5.Lcd.print("Volume:30");
+
   dacWrite(25, 0);
-  if (Tunes::outpin == 26){
-  ledcDetachPin(SPEAKER_PIN);
-  pinMode(SPEAKER_PIN, INPUT);
+  if (Tunes::outpin == 26) {
+    ledcDetachPin(SPEAKER_PIN);
+    pinMode(SPEAKER_PIN, INPUT);
   }
   tunes.init();
-  M5.Speaker.setVolume(1);
+  M5.Speaker.setVolume(255);
+  pinMode(5, OUTPUT);
+  pinMode(2, OUTPUT);
+  digitalWrite(2, HIGH);
 }
 
 int onpu;
 boolean onpudraw;
+int amp = 1;
 
 void loop() {
   tunes.run();
 
   int ch, data1, data2;
-  if (MIDI.read() && MIDI.getChannel() <= 4)
-  {
-    if (MIDI.getType() == midi::NoteOn)
+
+  /*  if (MIDI.read() && MIDI.getChannel() == 10)
     {
-      ch = MIDI.getChannel();
-      data1 = MIDI.getData1();
-      data2 = MIDI.getData2();
-      portENTER_CRITICAL(&Tunes::timerMux);
-      tunes.noteon(ch, data1, data2);
-      portEXIT_CRITICAL(&Tunes::timerMux);
+      if (MIDI.getType() == midi::NoteOn)
+      {
+        data1 = MIDI.getData1();
+        if (data1 == 60)
+        digitalWrite(5,HIGH);
+      }
+        else if (MIDI.getType() == midi::NoteOff)
+      {
+        data1 = MIDI.getData1();
+        if (data1 == 60)
+        digitalWrite(5,LOW);
+      }
+
     }
+  */
+/*
+if (MIDI.read() && MIDI.getChannel() == 5)
+{
+  if (MIDI.getType() == midi::NoteOn)
+  {
+    data1 = MIDI.getData1();
+    data2 = MIDI.getData2();
+    if (data1 == 60) {
+      digitalWrite(5, HIGH);
+    }
+  }
+  else if (MIDI.getType() == midi::NoteOff)
+  {
+    data1 = MIDI.getData1();
+    data2 = MIDI.getData2();
+    if (data1 == 60) {
+      digitalWrite(5, LOW);
+    }
+  }
+}
+ */
+if (MIDI.read() && MIDI.getChannel() <= 4)
+{
+  if (MIDI.getType() == midi::NoteOn)
+  {
+    ch = MIDI.getChannel();
+    data1 = MIDI.getData1();
+    data2 = MIDI.getData2();
+    portENTER_CRITICAL(&Tunes::timerMux);
+    tunes.noteon(ch, data1, data2);
+    portEXIT_CRITICAL(&Tunes::timerMux);
+  }
 
   else if (MIDI.getType() == midi::NoteOff)
   {
@@ -120,7 +170,7 @@ void loop() {
     else if (data1 == 75) Tunes::decay[ch - 1] = data2;
     else if (data1 == 6 && data2 <= 24) Tunes::pbrange[ch - 1] = data2;
   }
-    else if (MIDI.getType() == midi::PitchBend)
+  else if (MIDI.getType() == midi::PitchBend)
   {
     ch = MIDI.getChannel();
     data1 = MIDI.getData1();
@@ -129,6 +179,39 @@ void loop() {
     tunes.pbend(ch, data1, data2);
     portEXIT_CRITICAL(&Tunes::timerMux);
   }
+}
+if (M5.BtnA.wasReleased()) {
+  if (Tunes::outpin == 26)
+  {
+    Tunes::outpin = 25;
+    M5.Lcd.setTextSize(3);
+    M5.Lcd.setCursor(20, 200);
+    M5.Lcd.print("OUT:25");
+  } else {
+    Tunes::outpin = 26;
+    M5.Lcd.setTextSize(3);
+    M5.Lcd.setCursor(20, 200);
+    M5.Lcd.print("OUT:26");
   }
-//  M5.update();
+}
+
+if (M5.BtnB.wasReleased() && Tunes::M_vol > 0 ) {
+  Tunes::M_vol --;
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.setCursor(145, 160);
+  M5.Lcd.print("   ");
+  M5.Lcd.setCursor(145, 160);
+  M5.Lcd.print(Tunes::M_vol);
+}
+if (M5.BtnC.wasReleased() && Tunes::M_vol < 99 ) {
+  //amp = !amp;
+  //digitalWrite(2,amp);
+  Tunes::M_vol ++;
+  M5.Lcd.setTextSize(3);
+  M5.Lcd.setCursor(145, 160);
+  M5.Lcd.print("   ");
+  M5.Lcd.setCursor(145, 160);
+  M5.Lcd.print(Tunes::M_vol);
+}
+M5.update();
 }
