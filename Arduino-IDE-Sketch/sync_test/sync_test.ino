@@ -19,6 +19,8 @@ void setup() {
   M5.Lcd.println("A:Slow B:Fast");
   M5.Lcd.setTextColor(RED);
   pinMode(5, OUTPUT);
+  pinMode(2, OUTPUT);
+  digitalWrite(2, LOW);
 }
 
 int count;
