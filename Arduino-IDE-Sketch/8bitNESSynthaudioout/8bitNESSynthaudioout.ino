@@ -62,8 +62,7 @@ void setup() {
   M5.Lcd.fillCircle(250, 180, 8 , 0xE8E4);
   M5.Lcd.fillCircle(290, 180, 20 , 0xE8E4);
 
-  Tunes::outpin = 25;  //50kΩ程度の可変抵抗を持っている人はここを26に変更して
-  //GPIO25と26の間にかましてください。音量が下げられます。
+  Tunes::outpin = 25;
   M5.Lcd.setTextSize(3);
   M5.Lcd.setCursor(20, 200);
   M5.Lcd.print("OUT:25");

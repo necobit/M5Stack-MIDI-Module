@@ -1,11 +1,4 @@
-/*
-    Name:       button.ino
-    Created:    2018/9/21 14:06:15
-    Author:     sakabin
-*/
-
 #include <M5Stack.h>
-// The setup() function runs once each time the micro-controller starts
 void setup() {
   // init lcd, serial, but don't init sd card
   M5.begin(true, false, true);
