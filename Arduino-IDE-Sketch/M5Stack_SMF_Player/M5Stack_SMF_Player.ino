@@ -5,7 +5,7 @@
 // 以下のI/F/ライブラリを使用します
 //  M5Stack用MIDIモジュール2 https://necobit.com/denshi/m5-midi-module2/
 //  MSTimer2
-//  Loviyan GFX
+//  LovyanGFX
 //
 //  オリジナルは @catsin さんの https://bitbucket.org/kyoto-densouan/smfseq/src/m5stack/
 //  necobitでは画面描画部分と、起動時自動スタートの処理への変更をしています。
@@ -18,6 +18,8 @@
 #include "IntervalCheckMicros.h"
 
 SMF_SEQ_TABLE *pseqTbl; //SMFシーケンサハンドル
+
+LGFX lcd;
 
 //----------------------------------------------------------------------
 //MIDIポートアクセス関数定義
@@ -244,12 +246,12 @@ void updateScreen()
       break;
     case SMF_STAT_STOP: //演奏停止
       lcd.println(F("stop."));
-      lcd.fillRect(260, 5, 40, 40, WHITE);
+      lcd.fillRect(260, 5, 40, 40, TFT_WHITE);
       break;
     case SMF_STAT_PLAY: //演奏中
       lcd.println(F("playing."));
-      lcd.fillRect(280, 5, 310, 45, BLACK);
-      lcd.fillTriangle(280, 5, 280, 45, 310, 25, YELLOW);
+      lcd.fillRect(280, 5, 310, 45, TFT_BLACK);
+      lcd.fillTriangle(280, 5, 280, 45, 310, 25, TFT_YELLOW);
       backscreen();
       break;
     case SMF_STAT_PAUSE: //演奏一時停止中
@@ -303,11 +305,6 @@ void setup()
                           // M5Stick-Cのバックライト調整は現在非対応です。
                           // AXP192ライブラリを別途includeして設定してください。
 
-  // 必要に応じてカラーモードを設定します。（初期値は16）
-  // 16の方がSPI通信量が少なく高速に動作しますが、赤と青の諧調が5bitになります。
-  // 24の方がSPI通信量が多くなりますが、諧調表現が綺麗になります。
-  //lcd.setColorDepth(16);  // RGB565の16ビットに設定
-  lcd.setColorDepth(24); // RGB888の24ビットに設定(表示される色数はパネル性能によりRGB666の18ビットになります)
 
   // clearまたはfillScreenで画面全体を塗り潰します。
   // どちらも同じ動作をしますが、clearは引数を省略でき、その場合は黒で塗り潰します。

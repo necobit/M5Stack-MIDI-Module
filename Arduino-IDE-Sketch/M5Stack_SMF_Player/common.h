@@ -6,7 +6,7 @@
 #include <Arduino.h>
 #define LGFX_M5STACK
 #include <LovyanGFX.hpp>
-static LGFX lcd;
+extern LGFX lcd;
 
 
 typedef unsigned char UCHAR;  //1バイト符号なしデータ（SMFファイルアクセスに使用）

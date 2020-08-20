@@ -701,8 +701,7 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
           }
           dx = 30 + MidiData1 * 2;
           dy = 60 + ((MidiStatus - 128) * 10);
-          lcd.drawPixel(0, 0);
-          lcd.drawLine(dx, dy, dx, dy + 5, BLACK);
+          lcd.drawFastVLine(dx, dy, 6, TFT_BLACK);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_NOTEON:
@@ -732,8 +731,7 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
           }
           dx = 30 + MidiData1 * 2;
           dy = 60 + ((MidiStatus - 144) * 10);
-          lcd.drawPixel(0, 0);
-          lcd.drawLine(dx, dy, dx, dy + 5, WHITE);
+          lcd.drawFastVLine(dx, dy, 6, TFT_WHITE);
 
           Ret = SMF_OK;
           break;
