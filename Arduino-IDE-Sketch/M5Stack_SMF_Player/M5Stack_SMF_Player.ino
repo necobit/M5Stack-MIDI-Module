@@ -275,16 +275,30 @@ void updateScreen()
 
 void backscreen()
 {
-  lcd.drawRect(10, 58, 300, 161, 0xF660);
   lcd.setFont(&fonts::Font0);
   lcd.setTextSize(1);
   for (int chd = 1; chd <= 16; chd++)
   {
+    int y = 49 + chd * 10;
+    lcd.drawNumber(chd, 4, y + 1);
+    lcd.drawFastHLine(2, 58 + chd * 10, 316, 0xF660);
 
-    lcd.drawNumber(chd, 13, 50 + chd * 10);
-    lcd.drawLine(11, 58 + chd * 10, 308, 58 + chd * 10, 0xF660);
+    for (int oct = 0; oct < 11; ++oct) {
+      int x = 18 + oct * 28;
+      for (int n = 0; n < 7; ++n) {
+        lcd.fillRect(x + n * 4, y, 3, 9, TFT_DARKGREY);
+      }
+      lcd.setColor(TFT_BLACK);
+      lcd.fillRect(x +  2, y, 3, 5);
+      lcd.fillRect(x +  6, y, 3, 5);
+      lcd.fillRect(x + 14, y, 3, 5);
+      lcd.fillRect(x + 18, y, 3, 5);
+      lcd.fillRect(x + 22, y, 3, 5);
+    }
   }
-  lcd.drawLine(26, 58, 26, 217, 0xF660);
+  lcd.drawFastVLine( 16, 58, 161, 0xF660);
+  lcd.drawRect( 1, 58, 318, 161, 0xF660);
+  lcd.drawFastVLine( 319, 58, 161, 0);
 }
 
 void setup()
