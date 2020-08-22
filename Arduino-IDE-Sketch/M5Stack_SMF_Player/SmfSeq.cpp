@@ -711,7 +711,7 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
             Ret = SMF_NG;
             break;
           }
-          drawKey(MidiData1, MidiStatus - 128, false);
+          drawKey(MidiData1, MidiStatus & MIDI_CHANNEL_MASK, false);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_NOTEON:
@@ -739,7 +739,7 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
             Ret = SMF_NG;
             break;
           }
-          drawKey(MidiData1, MidiStatus - 144, true);
+          drawKey(MidiData1, MidiStatus & MIDI_CHANNEL_MASK, MidiData2);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_PKEYPRES:
