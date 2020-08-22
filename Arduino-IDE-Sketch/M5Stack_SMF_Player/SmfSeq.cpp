@@ -531,6 +531,20 @@ int SmfSeqTickProc(SMF_SEQ_TABLE *pseqTbl)
   return (Ret);
 }
 
+inline void drawKey(int note, int ch, bool press)
+{
+  static constexpr int note_x[] = {0, 2, 4, 6, 8, 12, 14, 16, 18, 20, 22, 24 };
+  static constexpr int note_y[] = {4, 0, 4, 0, 4,  4,  0,  4,  0,  4,  0,  4 };
+
+  int oct = note / 12;
+  int idx = note - oct * 12;
+  int dx = 18 + oct * 28 + note_x[idx];
+  int dy = 60 +  ch * 10 + note_y[idx];
+  int color = TFT_WHITE;
+  if (!press) color = note_y[idx] ? TFT_DARKGREY : TFT_BLACK;
+  lcd.fillRect(dx, dy, 3, 3, color);
+}
+
 int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
 {
   UCHAR ExBuff[SMF_EXBUFLNG];
@@ -543,8 +557,6 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
   int Ret;
   int Cnt;
   long TempTempo;
-  int dx;
-  int dy;
 
   if (pseqTbl == NULL)
   {
@@ -699,9 +711,7 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
             Ret = SMF_NG;
             break;
           }
-          dx = 30 + MidiData1 * 2;
-          dy = 60 + ((MidiStatus - 128) * 10);
-          lcd.drawFastVLine(dx, dy, 6, TFT_BLACK);
+          drawKey(MidiData1, MidiStatus - 128, false);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_NOTEON:
@@ -729,10 +739,7 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
             Ret = SMF_NG;
             break;
           }
-          dx = 30 + MidiData1 * 2;
-          dy = 60 + ((MidiStatus - 144) * 10);
-          lcd.drawFastVLine(dx, dy, 6, TFT_WHITE);
-
+          drawKey(MidiData1, MidiStatus - 144, true);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_PKEYPRES:
