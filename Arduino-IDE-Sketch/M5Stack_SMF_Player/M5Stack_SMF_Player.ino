@@ -281,14 +281,14 @@ void backscreen()
   {
     int y = 49 + chd * 10;
     lcd.drawNumber(chd, 4, y + 1);
-    lcd.drawFastHLine(2, 58 + chd * 10, 316, 0xF660);
-
+    lcd.drawFastHLine(2, y-1, 316, 0xF660);
+    lcd.fillRect(18, y, 300, 9, TFT_DARKGREY);
+    lcd.setColor(TFT_BLACK);
     for (int oct = 0; oct < 11; ++oct) {
       int x = 18 + oct * 28;
       for (int n = 0; n < 7; ++n) {
-        lcd.fillRect(x + n * 4, y, 3, 9, TFT_DARKGREY);
+        lcd.drawFastVLine(x + n * 4 + 3, y, 9);
       }
-      lcd.setColor(TFT_BLACK);
       lcd.fillRect(x +  2, y, 3, 5);
       lcd.fillRect(x +  6, y, 3, 5);
       lcd.fillRect(x + 14, y, 3, 5);
@@ -298,7 +298,6 @@ void backscreen()
   }
   lcd.drawFastVLine( 16, 58, 161, 0xF660);
   lcd.drawRect( 1, 58, 318, 161, 0xF660);
-  lcd.drawFastVLine( 319, 58, 161, 0);
 }
 
 void setup()
