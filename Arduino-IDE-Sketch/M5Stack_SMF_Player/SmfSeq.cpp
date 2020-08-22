@@ -10,6 +10,8 @@
 #include "MidiFunc.h"      //MIDIインタフェース
 #include "SmfSeq.h"
 
+#pragma GCC optimize ("O3")
+
 //-----------------------------------------------------------------------------
 //SMFシーケンス用テーブル
 //-----------------------------------------------------------------------------
@@ -539,10 +541,10 @@ inline void drawKey(int note, int ch, bool press)
   int oct = note / 12;
   int idx = note - oct * 12;
   int dx = 18 + oct * 28 + note_x[idx];
-  int dy = 60 +  ch * 10 + note_y[idx];
+  int dy = 61 +  ch * 10 + note_y[idx];
   int color = TFT_WHITE;
   if (!press) color = note_y[idx] ? TFT_DARKGREY : TFT_BLACK;
-  lcd.fillRect(dx, dy, 3, 3, color);
+  lcd.fillRect(dx, dy, 3, 2, color);
 }
 
 int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
@@ -701,17 +703,18 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
           }
           MidiData1 = (int)MidiData[0];
           MidiData2 = (int)MidiData[1];
-
+          lcd.startWrite();
+          drawKey(MidiData1, MidiStatus & MIDI_CHANNEL_MASK, false);
           Ret = midiOutShortMsg((UCHAR)MidiStatus,
                                 (UCHAR)MidiData1,
                                 (UCHAR)MidiData2);
+          lcd.endWrite();
           if (Ret == MIDI_NG)
           {
             ptrkTbl->TrackStatus = SMF_TRKSTAT_TRACKEND;
             Ret = SMF_NG;
             break;
           }
-          drawKey(MidiData1, MidiStatus & MIDI_CHANNEL_MASK, false);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_NOTEON:
@@ -724,6 +727,8 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
           }
           MidiData1 = (int)MidiData[0];
           MidiData2 = (int)MidiData[1];
+          lcd.startWrite();
+          drawKey(MidiData1, MidiStatus & MIDI_CHANNEL_MASK, MidiData2);
           //ノートオンによるノートオフ対策
           if (MidiData2 == 0)
           {
@@ -733,13 +738,13 @@ int SmfSeqEventProc(SMF_SEQ_TABLE *pseqTbl, SMF_TRACK_TABLE *ptrkTbl)
           Ret = midiOutShortMsg((UCHAR)MidiStatus,
                                 (UCHAR)MidiData1,
                                 (UCHAR)MidiData2);
+          lcd.endWrite();
           if (Ret == MIDI_NG)
           {
             ptrkTbl->TrackStatus = SMF_TRKSTAT_TRACKEND;
             Ret = SMF_NG;
             break;
           }
-          drawKey(MidiData1, MidiStatus & MIDI_CHANNEL_MASK, MidiData2);
           Ret = SMF_OK;
           break;
         case MIDI_STATCH_PKEYPRES:
