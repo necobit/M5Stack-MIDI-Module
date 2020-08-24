@@ -310,18 +310,12 @@ void setup()
   // 最初に初期化関数を呼び出します。
   lcd.init();
 
-  // 回転方向を 0～3 の4方向から設定します。(4～7を使用すると上下反転になります。)
   lcd.setRotation(1);
 
   // バックライトの輝度を 0～255 の範囲で設定します。
-  lcd.setBrightness(255); // の範囲で設定
-                          // M5Stick-Cのバックライト調整は現在非対応です。
-                          // AXP192ライブラリを別途includeして設定してください。
+  lcd.setBrightness(255);
 
-
-  // clearまたはfillScreenで画面全体を塗り潰します。
-  // どちらも同じ動作をしますが、clearは引数を省略でき、その場合は黒で塗り潰します。
-  lcd.clear(0x0000); // 黒で塗り潰し
+  lcd.clear(TFT_BLACK);
 
   Serial.begin(115200);
 
@@ -405,7 +399,7 @@ void loop()
         SmfSeqPlayResetTrkTbl(pseqTbl);
         // ファイルクローズ
         SmfSeqEnd(pseqTbl);
-        lcd.fillRect(280, 5, 310, 45, BLACK);
+        lcd.fillRect(280, 5, 310, 45, TFT_BLACK);
         lcd.setFont(&fonts::Font4);
         lcd.setCursor(5, 27);
         lcd.setTextSize(1);
